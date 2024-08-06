@@ -1,0 +1,26 @@
+keep it simple
+
+objective of game: 
+    avoid flying objects 
+    kill enemies 
+    go to next level 
+
+player mechanics
+    player can run/jump 
+    no lives 
+    remain suspended in air for short amount of time 
+
+level mechanics 
+    flying objects toward player, one hit kills player 
+    enemies have can shoot at player, only damages 
+
+decor: 
+    pillars
+    torches
+    etc 
+
+Juice: 
+    light
+    flames 
+    backgound movement 
+    sparks 

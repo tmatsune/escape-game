@@ -1,0 +1,1 @@
+self.screen.blit(pg.transform.scale(self.base_display, self.screen.get_size()), (0, 0))
