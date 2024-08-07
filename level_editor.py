@@ -105,8 +105,7 @@ class Tile_Editor:
             tile_type = self.curr_tile[0]
             tile_name = self.curr_tile[1]
 
-            tile_type_text = text_surface(
-                f'type: {tile_type}', 10, False, WHITE)
+            tile_type_text = text_surface(f'type: {tile_type}', 10, False, WHITE)
             self.display.blit(
                 tile_type_text, [WIDTH - tile_type_text.get_width() - 10, 10])
 

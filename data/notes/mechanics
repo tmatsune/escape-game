@@ -13,6 +13,11 @@ player mechanics
 level mechanics 
     flying objects toward player, one hit kills player 
     enemies have can shoot at player, only damages 
+    MAIN GAME MECHANIC:
+        Each level will have a mutiple bullets flying
+        if can dodge bullets and timer is done, can go to next round, (maybe add enemies)
+        POLISH: 
+            add circle when shot out 
 
 decor: 
     pillars

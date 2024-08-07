@@ -6,6 +6,8 @@ global colokey_e
 colorkey_e = (0, 0, 0)
 global particle_images
 particle_images = {}
+global projectile_images 
+projectile_images = {}
 
 def circle_surf(size, color):
     surf = pg.Surface((size * 2 + 2, size * 2 + 2))
@@ -49,20 +51,16 @@ def load_particle_images(path):
         #except:
         #    pass
 
-def load_stars_images(path):
-    star_images = []
-    file_list = os.listdir(path)
-    for folder in file_list:
-        img_list = os.listdir(path + '/' + folder)
+def load_projectile_images(path, size):
+    global projectile_images
+    proj_image_list = os.listdir(path)
+    for proj_path in proj_image_list:
+        img_list = os.listdir(f'{path}/{proj_path}')
         images = []
         for img in img_list:
-            image = pg.image.load(path + '/' + folder + '/' + img).convert()
-            w = image.get_width()
-            h = image.get_height()
-            image = pg.transform.scale(image, (w // 3, h // 3))
+            image = get_image(f'{path}/{proj_path}/{img}', size)
             images.append(image)
-        star_images += images
-    return star_images
+        projectile_images[proj_path] = images.copy()
 
 class Particle(object):
     def __init__(self,x,y,particle_type,motion,decay_rate,start_frame,custom_color=None, physics=False):
@@ -176,4 +174,9 @@ def background_effect_test():
     particle[2][1] -= particle[4]
     if particle[2][1] <= 0:
     self.data.background_particles.remove(particle)
+
+    
+SWAP
+                #n_img = swap_color(img[0], (255, 255, 255), (0, 0, 255))
+            #self.base_display.blit(n_img, (100, 100))
 '''
