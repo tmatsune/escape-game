@@ -378,7 +378,25 @@ class App:
         pg.display.update()
 
     def add_dungeon_projectile(self):
-        pass
+        proj_pos = []
+        proj_vel = []
+        self.data.enemy_projectiles.append([[], [], 0, random.randrange(1, 6)])
+
+        for j in range(3):
+            ang = math.pi + \
+                random.uniform(-math.pi/8, math.pi/8)
+            # [ pos, angle, speed, width, decay, speed_decay, length, length_decay, color ]
+            spark = [[0,0],
+                     ang,
+                     random.randrange(8, 11),
+                     random.randrange(2, 4),
+                     0.12,
+                     0.9,
+                     random.randrange(10, 12),
+                     0.97,
+                     (20, 6, 6)
+                     ]
+            self.data.sparks.append(spark)
 
     def test_func(self):
         #self.data.circles.append([ [self.data.player.pos[0], self.data.player.pos[1]], 1, 2, 5, .9, .1, (247, 237, 186)])
@@ -388,7 +406,6 @@ class App:
                  random.randrange(10, 12), 0.97, (20, 6, 6)]
         self.data.sparks.append(spark)
         
-
     def update(self):
         self.clock.tick(FPS)
         pg.display.set_caption(f'{self.clock.get_fps()}')
@@ -420,6 +437,8 @@ class App:
                         self.data.e_handler.change_state(State.GAME_ON)
                     else:
                         self.data.e_handler.change_state(State.PAUSE)
+                if e.key == pg.K_j:
+                    self.data.player.dodge(3)
 
             if e.type == pg.KEYUP:
                 if e.key == pg.K_a:

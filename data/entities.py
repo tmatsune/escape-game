@@ -7,6 +7,7 @@ false = False
 true = True
 
 MAX_JUMPS = 2
+FORCE_SCALAR_DECAY = .2
 
 class Player(Entity):
     def __init__(self, *args):
@@ -27,13 +28,13 @@ class Player(Entity):
         self.firerate = 4
         self.fire_timer = 4
         self.jumps = MAX_JUMPS
+        self.force_scalar = 1
 
     def update(self, dt):
         super().update(dt)
         self.inputs = self.data.inputs.copy()
         if self.inputs[0] or self.inputs[1]:
             self.change_state('run')
-
         
         if not self.inputs[0] and not self.inputs[1] and not self.inputs[2] and self.air_time == 0 and self.state != 'hurt':
             self.change_state('idle')
@@ -42,8 +43,23 @@ class Player(Entity):
         elif self.inputs[1]:
             self.flip = false
 
-        self.vel[0] = (self.inputs[1] - self.inputs[0]) * self.speed
+
+        speed_x = (self.inputs[1] - self.inputs[0])
+        if self.force_scalar != 1:
+            if self.flip: 
+                if speed_x == 0: speed_x = -1
+                else: speed_x = -1.1
+            else: 
+                if speed_x == 0: speed_x = 1
+                else: speed_x = 1.1
+                
+        self.vel[0] = speed_x * self.speed * self.force_scalar
         self.vel[1] = min(14, self.vel[1]+1)
+        
+        if self.force_scalar > 1:
+            self.force_scalar -= FORCE_SCALAR_DECAY
+        elif self.force_scalar < 1:
+            self.force_scalar = 1
 
         hitable_rects = self.data.tile_map.get_surrounding_tiles(self.center())
         collisions = self.movement(self.vel, hitable_rects)
@@ -66,6 +82,9 @@ class Player(Entity):
         if self.jumps > 0:
             self.vel[1] = -10
             self.jumps -= 1
+
+    def dodge(self, scalar):
+        self.force_scalar = scalar
 
     def render(self, surf, offset=[0, 0]):
         offset = offset.copy()
