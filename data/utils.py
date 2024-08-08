@@ -42,7 +42,6 @@ def silhouette(surf, color=(255, 255, 255)):
     new_surf.set_colorkey((0, 0, 0))
     return new_surf
 
-
 def outline(target, src, pos, color):
     s = silhouette(src, color=color)
     for shift in [[0, 1], [1, 0], [-1, 0], [0, -1]]:

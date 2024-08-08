@@ -8,6 +8,7 @@ true = True
 
 MAX_JUMPS = 2
 FORCE_SCALAR_DECAY = .2
+HURT_TIME = 1
 
 class Player(Entity):
     def __init__(self, *args):
@@ -16,8 +17,8 @@ class Player(Entity):
         self.speed = 4
         self.air_time = 0
         self.jumps = 1
-        self.health = 100
-        self.hurt_timer = 0
+        self.lives = 3
+        self.hurt_timer = HURT_TIME
         self.img_offset = [0, 0]
         self.flip = false
         self.inputs = [False, False, False, False]
@@ -29,11 +30,12 @@ class Player(Entity):
         self.fire_timer = 4
         self.jumps = MAX_JUMPS
         self.force_scalar = 1
+        self.mask = None
 
     def update(self, dt):
         super().update(dt)
         self.inputs = self.data.inputs.copy()
-        if self.inputs[0] or self.inputs[1]:
+        if (self.inputs[0] or self.inputs[1]) and not self.state == 'hurt':
             self.change_state('run')
         
         if not self.inputs[0] and not self.inputs[1] and not self.inputs[2] and self.air_time == 0 and self.state != 'hurt':
@@ -43,16 +45,23 @@ class Player(Entity):
         elif self.inputs[1]:
             self.flip = false
 
+        if self.state == 'hurt':
+            self.hurt_timer -= dt
+            if self.hurt_timer < 0:
+                self.hurt_timer = HURT_TIME
+                self.change_state('idle')
 
         speed_x = (self.inputs[1] - self.inputs[0])
-        if self.force_scalar != 1:
+        if self.force_scalar != 1 and self.state != 'hurt':
             if self.flip: 
                 if speed_x == 0: speed_x = -1
                 else: speed_x = -1.1
             else: 
                 if speed_x == 0: speed_x = 1
                 else: speed_x = 1.1
-                
+        elif self.force_scalar != 1:
+            speed_x = 1.2 if self.flip else -1.2
+
         self.vel[0] = speed_x * self.speed * self.force_scalar
         self.vel[1] = min(14, self.vel[1]+1)
         
@@ -103,7 +112,14 @@ class Player(Entity):
         if self.anim.config['outline']:
             outline(surf, img, ((
                 self.pos[0] - offset[0]), (self.pos[1] - offset[1])), self.anim.config['outline'])
+            
+        self.mask = pg.mask.from_surface(img)
         surf.blit(img, (self.pos[0] - offset[0], self.pos[1] - offset[1]))
+
+        if self.state == 'hurt':
+            if math.sin(self.data.total_time) > 0:
+                sil = silhouette(img)
+                surf.blit(sil, (self.pos[0] - offset[0], self.pos[1] - offset[1]))
 
     def squash_effect(self, collisions):
 
@@ -128,6 +144,25 @@ class Player(Entity):
         if collisions['down']:
             if self.vel[1] > 6:
                 self.squish_velocity = -0.14
+
+    def hit(self):
+        self.lives -= 1 
+        self.change_state('hurt')
+        for i in range(5):
+            color = random.choice([(190, 5, 55), (200, 30, 30), (180, 10, 10)])
+            particle = ['blood', self.center(), [random.random() * 6 - 3, random.random() * 6 - 3], color, random.randrange(3, 5), random.uniform(.02, .06), 0]
+            self.data.circle_particles.append(particle)
+        for i in range(5):  # right
+            fire = ['fire', self.data.player.pos.copy(), [random.uniform(3, 5) * math.cos(0), random.uniform(-1, 1)],
+                    (10, 0, 0), random.randrange(5, 7), random.uniform(.12, .18), 0]
+            self.data.circle_particles.append(fire)
+
+        for i in range(5):  # right
+            fire = ['fire', self.data.player.pos.copy(), [random.uniform(3, 5) * math.cos(math.pi), random.uniform(-1, 1)],
+                     (10, 0, 0), random.randrange(5, 7), random.uniform(.12, .18), 0]
+            self.data.circle_particles.append(fire)
+
+        self.force_scalar = 2
 
     def test_func(self):
         pass

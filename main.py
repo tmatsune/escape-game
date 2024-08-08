@@ -274,10 +274,11 @@ class App:
             dist_from_player = distance(proj[0], self.data.player.pos)
             if dist_from_player > 300:
                 self.data.enemy_projectiles.pop(i)
-                print('removed')
-            if dist_from_player < 10:
-                self.data.enemy_projectiles.pop(i)
             
+            if mask_collision(self.data.player.mask, self.data.player.pos, pg.mask.from_surface(image), proj[0]):
+                self.data.screenshake = 8
+                self.data.enemy_projectiles.pop(i)
+                self.data.player.hit()
 
         # ------ CIRCLES 
 
@@ -316,6 +317,51 @@ class App:
             points = [(p[0] - self.data.offset[0], p[1] - self.data.offset[1]) for p in points]
             pg.draw.polygon(self.base_display, (247, 237, 186), points)
 
+
+        for p in self.data.circle_particles.copy():
+
+            if p[0] == 'blood' or p[0] == 'fire_ball':
+                p[1][0] += p[2][0]
+                if self.data.tile_map.tile_collide(p[1]):
+                    p[1][0] -= p[2][0]
+                    p[2][0] *= -0.7
+                p[1][1] += p[2][1]
+                if self.data.tile_map.tile_collide((p[1][0], p[1][1])):
+                    p[1][1] -= p[2][1]
+                    p[2][1] *= -0.7
+                p[2][1] += .2  # gravity
+
+            if p[0] == 'fire':
+                p[1][0] += p[2][0]
+                p[1][1] += p[2][1]
+
+                if p[6] < 0.2:
+                    p[4] += p[5]
+                if p[6] < 0.4:
+                    #p[3] = (245, 237, 186)
+                    p[3] = (0, 128, 255)
+                elif p[6] < 0.6:
+                    p[3] = (50, 150, 250)
+                elif p[6] < 0.9:
+                    p[3] = (40, 240, 250)
+                elif p[6] < 0.14:
+                    p[3] = (160, 246, 255)
+                else:
+                    p[3] = (210, 250, 255)
+
+                p[6] += p[5]
+
+            if p[0] == 'fire_ball':
+                particle = ['fire', p[1].copy(), [random.random() - .5, random.randrange(-4, -1)],
+                            (10, 0, 0), random.randrange(3, 4), random.uniform(.12, .18), 0]
+                self.data.circle_particles.append(particle)
+
+            p[4] -= p[5]
+
+            if p[4] < 1:
+                self.data.circle_particles.remove(p)
+            else:
+                pg.draw.circle(self.base_display, p[3], (p[1][0] - self.data.offset[0], p[1][1] - self.data.offset[1]), p[4])
         # ---------------------- LEVEL MECHANICS -------------------- #
 
         if self.data.e_handler.state == State.GAME_ON:
