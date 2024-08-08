@@ -91,6 +91,7 @@ class Event_Handler:
         self.text = ''
         self.state = State.GAME_ON
         self.level_run = false
+        self.spawn_rate = [30, 25, 20, 15]
         self.starting_positions = {
             0: [0, -10],
             1: [150, -10],
@@ -254,8 +255,9 @@ class App:
                 self.data.particles.remove(particle)
 
         # ------ ENEMY_PROJECTILES 
+
         # [pos, vel, frame, const]
-        for proj in self.data.enemy_projectiles.copy():
+        for i,proj in sorted(enumerate(self.data.enemy_projectiles), reverse=true):
             proj[0][0] += proj[1][0]
             proj[0][1] += proj[1][1]
             image = projectile_images['e_projectile'][proj[2]]
@@ -269,7 +271,16 @@ class App:
                     (28, 6, 6)),
                 (proj[0][0] - self.data.offset[0], proj[0][1] - self.data.offset[1]))
 
+            dist_from_player = distance(proj[0], self.data.player.pos)
+            if dist_from_player > 300:
+                self.data.enemy_projectiles.pop(i)
+                print('removed')
+            if dist_from_player < 10:
+                self.data.enemy_projectiles.pop(i)
+            
+
         # ------ CIRCLES 
+
         # [pos, speed, radius, width, decay, speed_decay, color ] 
         for circle in self.data.circles.copy():
             pg.draw.circle(self.base_display, circle[6], 
@@ -284,6 +295,7 @@ class App:
             self.test_func()
 
         # ------ SPARKS 
+
         # [ pos, angle, speed, width, decay, speed_decay, length, length_decay, color ]
         for spark in self.data.sparks.copy():
             spark[0][0] += math.cos(spark[1]) * spark[2]
@@ -307,12 +319,16 @@ class App:
         # ---------------------- LEVEL MECHANICS -------------------- #
 
         if self.data.e_handler.state == State.GAME_ON:
+            
+            # ------ LEVEL 0 
             if self.data.e_handler.level == 0:
                 if self.data.e_handler.level_run:
                     pass
                 else:
                     if self.data.player.pos[0] > self.data.e_handler.level_start_pos[self.data.e_handler.level]:
                         self.data.e_handler.level = true
+            
+            # ------ LEVEL 1 
             elif self.data.e_handler.level == 1:
                 if self.data.e_handler.level_run:
                     if self.data.e_handler.level_timer == 0:
@@ -334,27 +350,33 @@ class App:
                                          (20, 6, 6)
                                          ]
                                 self.data.sparks.append(spark)
+                                
                     self.data.e_handler.level_timer += 1
+
                     if self.data.e_handler.level_timer < self.data.e_handler.level_times[self.data.e_handler.level]:
                         timer_text = text_surface(
                             f'Timer: {self.data.e_handler.level_timer} / {self.data.e_handler.level_times[self.data.e_handler.level]}', 10, false, WHITE)
                         self.base_display.blit(timer_text, [10, 10])
                         if self.data.e_handler.level_timer / self.data.e_handler.level_times[self.data.e_handler.level] < .16:
-                            tutorial_text = text_surface(
-                                f'Survive Until Timer runs out', 10, false, WHITE)
+                            tutorial_text = text_surface( f'Survive Until Timer runs out', 10, false, WHITE)
                             self.base_display.blit(tutorial_text, [(WIDTH//2)-tutorial_text.get_width()//2, HEIGHT//2])
                         else:
-                            pass
+                            # -------------- ADD PROJECTILES ------------- #
+                            if random.randint(1, self.data.e_handler.spawn_rate[self.data.e_handler.level]) == 1:
+                                self.add_dungeon_projectile()
                     else:
                         pass
                 else:
                     if self.data.player.pos[0] > self.data.e_handler.level_start_pos[self.data.e_handler.level]:
                         self.data.e_handler.level_run = true 
+
+            # ------ LEVEL 2 
             elif self.dsta.e_handler.level == 2:
                 if self.data.e_handler.level_run:
                     pass
                 else:
                     pass
+
         elif self.data.e_handler.state == State.PAUSE:
             pass
         elif self.data.e_handler.state == State.START_MENU:
@@ -377,34 +399,68 @@ class App:
         pg.display.flip()
         pg.display.update()
 
+    def rand_proj(self, case):
+        if case == 'top':
+            pos = [random.randrange(-10, WIDTH) + self.data.offset[0], self.data.offset[1]-8]
+            ang = math.atan2(
+                (self.data.player.pos[1] - self.data.offset[1] - (pos[1] - self.data.offset[1]) ), 
+                (self.data.player.pos[0] - self.data.offset[0] - (pos[0] - self.data.offset[0]) ) 
+                )
+        elif case == 'bottom':
+            pos = [random.randrange(-10, WIDTH) + self.data.offset[0], HEIGHT + self.data.offset[1]+8]
+            ang = math.atan2(
+                (self.data.player.pos[1] - self.data.offset[1] - (pos[1] - self.data.offset[1]) ), 
+                (self.data.player.pos[0] - self.data.offset[0] - (pos[0] - self.data.offset[0]) ) 
+                )
+        elif case == 'left':
+            pos = [self.data.offset[0]-8, random.randrange(-10, HEIGHT) - self.data.offset[1]]
+            ang = math.atan2(
+                (self.data.player.pos[1] - self.data.offset[1] - (pos[1] - self.data.offset[1]) ), 
+                (self.data.player.pos[0] - self.data.offset[0] - (pos[0] - self.data.offset[0]) ) 
+                )
+        elif case == 'right':
+            pos = [WIDTH+self.data.offset[0]+8, random.randrange(-10, HEIGHT) - self.data.offset[1]]
+            ang = math.atan2(
+                (self.data.player.pos[1] - self.data.offset[1] - (pos[1] - self.data.offset[1]) ), 
+                (self.data.player.pos[0] - self.data.offset[0] - (pos[0] - self.data.offset[0]) ) 
+                )
+        return pos, ang
+
     def add_dungeon_projectile(self):
-        proj_pos = []
-        proj_vel = []
-        self.data.enemy_projectiles.append([[], [], 0, random.randrange(1, 6)])
+        rand_side = random.choice(['left', 'right', 'bottom', 'top'])
+        rand_pos, ang = self.rand_proj(rand_side)
+        offset = rand_rad_angle(8)
+        self.data.enemy_projectiles.append([[rand_pos[0], rand_pos[1]], [math.cos(ang+offset)*2, math.sin(ang+offset)*2], 0, random.randrange(1, 6)])
 
         for j in range(3):
-            ang = math.pi + \
-                random.uniform(-math.pi/8, math.pi/8)
             # [ pos, angle, speed, width, decay, speed_decay, length, length_decay, color ]
-            spark = [[0,0],
-                     ang,
+            offset = rand_rad_angle(6)
+            spark = [[rand_pos[0], rand_pos[1]],
+                     ang + offset,
                      random.randrange(8, 11),
-                     random.randrange(2, 4),
-                     0.12,
-                     0.9,
-                     random.randrange(10, 12),
-                     0.97,
+                     random.randrange(5, 7),
+                     0.4,
+                     0.92,
+                     random.randrange(19, 22),
+                     0.96,
                      (20, 6, 6)
                      ]
             self.data.sparks.append(spark)
 
     def test_func(self):
         #self.data.circles.append([ [self.data.player.pos[0], self.data.player.pos[1]], 1, 2, 5, .9, .1, (247, 237, 186)])
-        ang = math.atan2((self.mouse_pos[1]//2) - (self.data.player.center()[1] - self.data.offset[1]), (self.mouse_pos[0]//2) - (self.data.player.center()[0] - self.data.offset[0]) )
-        spark = [self.data.player.center(), ang, random.randrange(8, 11),
-                 random.randrange(3, 5), 0.2, 0.9,
-                 random.randrange(10, 12), 0.97, (20, 6, 6)]
-        self.data.sparks.append(spark)
+
+        #ang = math.atan2((
+        # self.mouse_pos[1]//2) - (self.data.player.center()[1] - self.data.offset[1]), 
+        # (self.mouse_pos[0]//2) - (self.data.player.center()[0] - self.data.offset[0]) 
+        # )
+
+        #spark = [self.data.player.center(), ang, random.randrange(8, 11),
+        #         random.randrange(3, 5), 0.2, 0.9,
+        #         random.randrange(10, 12), 0.97, (20, 6, 6)]
+        #self.data.sparks.append(spark)
+
+        self.add_dungeon_projectile()
         
     def update(self):
         self.clock.tick(FPS)

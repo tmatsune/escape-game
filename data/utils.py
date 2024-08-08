@@ -1,5 +1,5 @@
 import pygame as pg
-import math
+import math, random
 false = False
 true = True
 
@@ -61,3 +61,8 @@ def render_text_box(surf, pos: list, size: list[int], color: tuple, hollow: int 
 
 def distance(a, b):
     return math.sqrt(math.pow(abs(a[0] - b[0]), 2) + math.pow(a[1] - b[1], 2))
+
+def rand_rad_angle(scalar):
+    return random.uniform(-math.pi/scalar, math.pi/scalar)
+
+def mask_collision(mask1, a, mask2, b): return mask2.overlap(mask1, (a[0] - b[0], a[1] - b[1]))
