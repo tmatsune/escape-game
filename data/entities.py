@@ -7,6 +7,7 @@ false = False
 true = True
 
 MAX_JUMPS = 2
+MAX_DASHES = 3
 FORCE_SCALAR_DECAY = .2
 HURT_TIME = 1
 
@@ -17,7 +18,10 @@ class Player(Entity):
         self.speed = 4
         self.air_time = 0
         self.jumps = 1
-        self.lives = 3
+        self.lives = 1
+        self.dead = false
+        self.dashes = MAX_DASHES
+        self.dash_bar = 0
         self.hurt_timer = HURT_TIME
         self.img_offset = [0, 0]
         self.flip = false
@@ -87,13 +91,27 @@ class Player(Entity):
         else:
             self.fire_timer = self.firerate
 
+        if self.dash_bar < 100:
+            self.dash_bar += 1
+        elif self.dash_bar >= 100:
+            if self.dashes < MAX_DASHES:
+                self.dashes += 1
+                self.dash_bar = 0 
+
+        if self.lives < 1 and not self.dead:
+            self.death_explosion()
+            self.dead = true 
+
     def jump(self):
         if self.jumps > 0:
             self.vel[1] = -10
             self.jumps -= 1
 
     def dodge(self, scalar):
-        self.force_scalar = scalar
+        if self.dashes > 0:
+            self.force_scalar = scalar
+            self.dashes -= 1
+            self.dash_bar = 0
 
     def render(self, surf, offset=[0, 0]):
         offset = offset.copy()
@@ -164,5 +182,19 @@ class Player(Entity):
 
         self.force_scalar = 2
 
-    def test_func(self):
-        pass
+    def death_explosion(self):
+        for i in range(18):
+            angle = random.uniform(-3.14, 3.14)
+            speed = random.randrange(1, 2)
+            particle = ['fire_ball', self.center(), [math.cos(angle) * speed, math.sin(angle) * speed], (245, 237, 186), random.randrange(4, 6), .04, 0]
+            self.data.circle_particles.append(particle)
+        for i in range(30):
+            ang = random.uniform(-math.pi, 0)
+            pos = self.center()
+            fire = ['fire', [pos[0] + random.randrange(-2,2), pos[1] + random.randrange(-2,2)], [random.uniform(-.5,.5), random.uniform(-1.5, -1)], (10, 0, 0), random.randrange(8, 11), random.uniform(.08, .12), -1]
+            self.data.circle_particles.append(fire)
+
+        for i in range(30):
+            color = random.choice([(190, 5, 55), (200, 30, 30), (180, 10, 10)])
+            particle = ['blood', self.center(), [random.random() * 6 - 3, random.random() * 6 - 3], color, random.randrange(4, 6), random.uniform(.02, .06), -.2]
+            self.data.circle_particles.append(particle)
