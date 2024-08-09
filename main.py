@@ -56,7 +56,6 @@ class Data:
             'pixel_0':'data/assets/fonts/pixel_0.ttf',
             'pixel_1': 'data/assets/fonts/pixel_1.ttf'
         }
-        
 
         load_particle_images('data/assets/images/particles')
         load_projectile_images('data/assets/images/projectiles', [CELL_SIZE//1.5, CELL_SIZE//1.5])
@@ -72,6 +71,20 @@ class Data:
         self.enemy_projectiles = []
         self.total_time = 0
         self.e_handler.reset()
+
+        self.load_map(self.e_handler.level)
+
+    def hard_reset(self):
+        self.player = None
+        self.inputs = [False, False, False, False]
+        self.screenshake = 0
+        self.particles = []
+        self.sparks = []
+        self.circles = []
+        self.circle_particles = []
+        self.enemy_projectiles = []
+        self.total_time = 0
+        self.e_handler.hard_reset()
 
         self.load_map(self.e_handler.level)
 
@@ -103,19 +116,25 @@ class Event_Handler:
         self.text = ''
         self.state = State.TUTORIAL
         self.level_run = false
-        self.spawn_rate = [25, 20, 15, 12]
+        self.spawn_rate = [25, 20, 15, 10]
         self.starting_positions = {
             0: [80, -10],
             1: [150, -10],
             2: [80, 100],
             3: [100,100],
         }
-        self.level_times = [300, 300, 500, 600]
+        self.level_times = [600, 800, 1000, 1400]
         self.level_start_pos = [120, 240, 200, 240]
 
     def reset(self): 
         self.level_timer = 0
         self.level_run = false
+    
+    def hard_reset(self):
+        self.level_timer = 0
+        self.level_run = false
+        self.level = 0 
+        self.state = State.TUTORIAL
     
     def change_state(self, state):
         if self.state != state:
@@ -293,7 +312,7 @@ class App:
                 self.data.enemy_projectiles.pop(i)
             
             if mask_collision(self.data.player.mask, self.data.player.pos, pg.mask.from_surface(image), proj[0]) \
-                and self.data.player.force_scalar == 1:
+                and self.data.player.force_scalar == 1 and (self.data.e_handler.state == State.GAME_ON or self.data.e_handler.state == State.TUTORIAL):
                 self.data.screenshake = 8
                 self.data.enemy_projectiles.pop(i)
                 self.data.player.hit()
@@ -390,7 +409,7 @@ class App:
             self.base_display.blit(timer_text, [10, 10])
 
             dashes_text = text_surface( f'Dashes: {self.data.player.dashes}', 10, false, WHITE)
-            self.base_display.blit(dashes_text, [WIDTH-dashes_text.get_width(), 10])
+            self.base_display.blit(dashes_text, [WIDTH-dashes_text.get_width()-8, 10])
 
             if self.data.e_handler.level_timer / self.data.e_handler.level_times[self.data.e_handler.level] < .16:
                 tutorial_text_0 = text_surface( f'Use "W,A,D" to move', 10, false, WHITE)
@@ -470,7 +489,25 @@ class App:
                     self.data.transition = [250, 1, 4, 'closing']
                     self.data.e_handler.change_state(State.GAME_ON)
         elif self.data.e_handler.state == State.DEAD:
-            pass
+
+
+            tutorial_text_0 = text_surface_1(f'GAME OVER', 28, false, (255, 70, 0), font_path=self.data.fonts['pixel_0'])
+            tutorial_text_1 = text_surface_1(f'GAME OVER', 28, false, (255, 205, 0), font_path=self.data.fonts['pixel_0'])
+            tutorial_text_2 = text_surface_1(f'GAME OVER', 28, false, (255, 255, 255), font_path=self.data.fonts['pixel_0'])
+            text_surf = pg.Surface((tutorial_text_0.get_width() + 4, tutorial_text_0.get_height()+10))
+            text_surf.set_colorkey((0, 0, 0))
+            text_surf.blit(tutorial_text_0, (0,0))
+            text_surf.blit(tutorial_text_1, (0, 4))
+            #if math.sin(self.data.total_time) > 0: text_surf.blit(tutorial_text_2, (0, 4))
+            self.base_display.blit(text_surf, (SCREEN_CENTER[0]-text_surf.get_width()//2, SCREEN_CENTER[1]-text_surf.get_height()))
+
+            reset_text = text_surface_1(f"press 'r' to reset game", 10, false, (255, 70, 0), font_path=self.data.fonts['pixel_0'])
+            reset_text_1 = text_surface_1(f"press 'r' to reset game", 10, false, (255, 255, 255), font_path=self.data.fonts['pixel_0'])
+            reset_text_flash = text_surface_1(f"press 'r' to reset game", 10, false, (255, 205, 0), font_path=self.data.fonts['pixel_0'])
+            self.base_display.blit(reset_text, (SCREEN_CENTER[0]-reset_text.get_width()//2, SCREEN_CENTER[1]))
+            self.base_display.blit(reset_text_1, (SCREEN_CENTER[0]-(reset_text.get_width()//2)+2, SCREEN_CENTER[1]))
+            if math.sin(self.data.total_time) > 0:
+                self.base_display.blit(reset_text_flash, (SCREEN_CENTER[0]-(reset_text.get_width()//2)+2, SCREEN_CENTER[1]))
 
         # ------- DISPLAY SCREENS ------- # 
         screenshake_offset = [0, 0]
@@ -604,14 +641,13 @@ class App:
          #self.mouse_pos[1]//2) - (self.data.player.center()[1] - self.data.offset[1]), 
          #(self.mouse_pos[0]//2) - (self.data.player.center()[0] - self.data.offset[0]) 
          #)
-
         self.add_dungeon_projectile()
         #angle = random.uniform(-3.14, 3.14)
         #speed = random.random() * 2 + 1
         #particle = ['fire_ball', self.data.player.center(), [math.cos(angle) * speed, math.sin(angle) * speed], (245, 237, 186), 4, .04, -.5]
         #self.data.circle_particles.append(particle)
         
-        #ang = random.uniform(-math.pi, 0)
+        #ang = random.uniform(-math.pi, math.pi)
         #spark = [self.data.player.center(), ang, random.randrange(8, 11), random.randrange(2, 4), 0.12, 0.9, random.randrange(10, 12), 0.97, (20, 6, 6)]
         #self.data.sparks.append(spark)
 
@@ -648,6 +684,10 @@ class App:
                         self.data.e_handler.change_state(State.PAUSE)
                 if e.key == pg.K_j:
                     self.data.player.dodge(3)
+                if e.key == pg.K_r:
+                    self.data.hard_reset()
+                if e.key == pg.K_k:
+                    self.data.player.lives = 0
 
             if e.type == pg.KEYUP:
                 if e.key == pg.K_a:

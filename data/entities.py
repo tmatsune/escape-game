@@ -132,12 +132,13 @@ class Player(Entity):
                 self.pos[0] - offset[0]), (self.pos[1] - offset[1])), self.anim.config['outline'])
             
         self.mask = pg.mask.from_surface(img)
-        surf.blit(img, (self.pos[0] - offset[0], self.pos[1] - offset[1]))
+        if self.lives > 0:
+            surf.blit(img, (self.pos[0] - offset[0], self.pos[1] - offset[1]))
 
-        if self.state == 'hurt':
-            if math.sin(self.data.total_time) > 0:
-                sil = silhouette(img)
-                surf.blit(sil, (self.pos[0] - offset[0], self.pos[1] - offset[1]))
+            if self.state == 'hurt':
+                if math.sin(self.data.total_time) > 0:
+                    sil = silhouette(img)
+                    surf.blit(sil, (self.pos[0] - offset[0], self.pos[1] - offset[1]))
 
     def squash_effect(self, collisions):
 
@@ -189,12 +190,17 @@ class Player(Entity):
             particle = ['fire_ball', self.center(), [math.cos(angle) * speed, math.sin(angle) * speed], (245, 237, 186), random.randrange(4, 6), .04, 0]
             self.data.circle_particles.append(particle)
         for i in range(30):
-            ang = random.uniform(-math.pi, 0)
             pos = self.center()
-            fire = ['fire', [pos[0] + random.randrange(-2,2), pos[1] + random.randrange(-2,2)], [random.uniform(-.5,.5), random.uniform(-1.5, -1)], (10, 0, 0), random.randrange(8, 11), random.uniform(.08, .12), -1]
+            fire = ['fire', [pos[0] + random.randrange(-2,2), pos[1] + random.randrange(10,20)], [random.uniform(-.5,.5), random.uniform(-1.2, -.5)], (10, 0, 0), random.randrange(8, 11), random.uniform(.12, .16), 0]
             self.data.circle_particles.append(fire)
 
         for i in range(30):
             color = random.choice([(190, 5, 55), (200, 30, 30), (180, 10, 10)])
             particle = ['blood', self.center(), [random.random() * 6 - 3, random.random() * 6 - 3], color, random.randrange(4, 6), random.uniform(.02, .06), -.2]
             self.data.circle_particles.append(particle)
+
+        for i in range(18):
+            ang = random.uniform(-math.pi, math.pi)
+            spark = [self.data.player.center(), ang, random.randrange(8, 11), random.randrange(6, 8), random.uniform(.20, .24), 0.9, random.randrange(16, 20), random.uniform(.92, .98), (20, 6, 6)]
+            self.data.sparks.append(spark)
+
