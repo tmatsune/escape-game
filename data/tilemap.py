@@ -122,7 +122,13 @@ class Tile_Map:
                 if tile[0] == 'objects':
                     print('object: ', tile) 
                 else:
-                    tile[3] = get_image(tile[3], [CELL_SIZE, CELL_SIZE])
+                    if tile[1] == 'decor':
+                        if tile[2] == 2:
+                            tile[3] = get_image(tile[3], [CELL_SIZE*1.5, CELL_SIZE*1.5])
+                        else:
+                            tile[3] = get_image(tile[3], [CELL_SIZE, CELL_SIZE])    
+                    else:
+                        tile[3] = get_image(tile[3], [CELL_SIZE, CELL_SIZE])
                     res_data[key][layer] = tile
             for layer in res_data[key]:
                 all_layers.add(layer)

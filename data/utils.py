@@ -68,3 +68,13 @@ def rand_rad_angle(scalar):
     return random.uniform(-math.pi/scalar, math.pi/scalar)
 
 def mask_collision(mask1, a, mask2, b): return mask2.overlap(mask1, (a[0] - b[0], a[1] - b[1]))
+
+
+def text_3d(text, size, italic, rgb0, rgb1, offset, font_path=None, bold=True):
+    text_0 = text_surface_1(text, size, bold, rgb0, font_path=font_path)
+    text_1 = text_surface_1(text, size, bold, rgb1, font_path=font_path)
+    text_surf = pg.Surface((text_0.get_width() + 10, text_0.get_height() + 10))
+    text_surf.set_colorkey((0, 0, 0))
+    text_surf.blit(text_0, (0,0))
+    text_surf.blit(text_1, (offset[0], offset[1]))
+    return text_surf

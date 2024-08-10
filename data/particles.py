@@ -163,6 +163,7 @@ def shaded_block(width, height):
         fog_surf.set_alpha(150)
         fog_surf.set_colorkey((0, 0, 0))
         return fog_surf
+
 '''
 def background_effect_test():
     particle[0][1] += particle[1][1]

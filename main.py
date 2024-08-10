@@ -12,10 +12,12 @@ false = False
 true = True
 inf = float('inf')
 n_inf = float('-inf')
+MAX_ROUNDS = 4 
 
 class Decor(Enum):
     LEFT_TORCH = 0
     RIGHT_TORCH = 1
+    BIG_TORCH = 2
 
 class State(Enum):
     START_MENU = 0
@@ -25,6 +27,7 @@ class State(Enum):
     TRANSITION = 4
     TUTORIAL = 5
     DEAD = 6
+    WIN = 7 
 
 class Data:
     def __init__(self, app) -> None:
@@ -51,10 +54,12 @@ class Data:
         self.asset_manager = Asset_Manager()
         self.tile_map = Tile_Map(self)
         self.load_map(self.e_handler.level)
+        self.count = [0,0]
 
         self.fonts = {
             'pixel_0':'data/assets/fonts/pixel_0.ttf',
-            'pixel_1': 'data/assets/fonts/pixel_1.ttf'
+            'pixel_1': 'data/assets/fonts/pixel_1.ttf',
+            'pixel_2': 'data/assets/fonts/pixel_2.ttf',
         }
 
         load_particle_images('data/assets/images/particles')
@@ -117,13 +122,14 @@ class Event_Handler:
         self.state = State.TUTORIAL
         self.level_run = false
         self.spawn_rate = [25, 20, 15, 10]
+        self.line_spawn_rate = [90, 85, 80, 75]
         self.starting_positions = {
             0: [80, -10],
             1: [150, -10],
             2: [80, 100],
             3: [100,100],
         }
-        self.level_times = [600, 800, 1000, 1400]
+        self.level_times = [500, 600, 600, 600]
         self.level_start_pos = [120, 240, 200, 240]
 
     def reset(self): 
@@ -190,11 +196,10 @@ class App:
         layers = self.data.tile_map.get_visible_tiles(self.data.offset)
         for n, layer in layers.items():
             for tile in layer:
+                
                 real_pos = [tile[0][0] * CELL_SIZE, tile[0][1] * CELL_SIZE]
-                self.base_display.blit(
-                    tile[4], 
-                    (real_pos[0] - self.data.offset[0], real_pos[1] - self.data.offset[1])
-                )
+                self.base_display.blit( tile[4], (real_pos[0] - self.data.offset[0], real_pos[1] - self.data.offset[1]) )
+
                 if tile[2] == 'decor':
                     if tile[3] == Decor.LEFT_TORCH.value:
                         torch_sin = math.sin((tile[0][1] % 100 + 200) / 300 * self.data.total_time * 0.08)
@@ -229,20 +234,8 @@ class App:
                     elif tile[3] == Decor.RIGHT_TORCH.value:
                         torch_sin = math.sin((tile[0][1] % 100 + 200) / 300 * self.data.total_time * 0.08)
 
-                        blit_center_add(
-                            self.base_display,
-                            circle_surf(24 + (torch_sin + 3) * 8.5,
-                                        (28 + (torch_sin + 4) * 0.1, 6 + (torch_sin + 4) * 0.2, 4 + (torch_sin + 4) * 0.1)),
-                            (real_pos[0] - self.data.offset[0] + 10,
-                             real_pos[1] - self.data.offset[1] + 4)
-                        )
-                        blit_center_add(
-                            self.base_display,
-                            circle_surf(10 + (torch_sin + 3) * 8.5,
-                                        (28 + (torch_sin + 4) * 0.1, 6 + (torch_sin + 4) * 0.2, 6 + (torch_sin + 4) * 0.2)),
-                            (real_pos[0] - self.data.offset[0] + 10,
-                             real_pos[1] - self.data.offset[1] + 4)
-                        )
+                        blit_center_add( self.base_display, circle_surf(24 + (torch_sin + 3) * 8.5,  (28 + (torch_sin + 4) * 0.1, 6 + (torch_sin + 4) * 0.2, 4 + (torch_sin + 4) * 0.1)), (real_pos[0] - self.data.offset[0] + 10, real_pos[1] - self.data.offset[1] + 4))
+                        blit_center_add( self.base_display, circle_surf(10 + (torch_sin + 3) * 8.5, (28 + (torch_sin + 4) * 0.1, 6 + (torch_sin + 4) * 0.2, 6 + (torch_sin + 4) * 0.2)),(real_pos[0] - self.data.offset[0] + 10, real_pos[1] - self.data.offset[1] + 4))
                         if random.randint(1, 6) == 1 and self.data.game_on():
                             self.data.particles.append(
                                     Particle(
@@ -255,6 +248,24 @@ class App:
                                             custom_color=(255, 255, 255)                                        # color
                                         )
                                 )
+                    elif tile[3] == Decor.BIG_TORCH.value:
+                        torch_sin = math.sin((tile[0][1] % 100 + 200) / 300 * self.data.total_time * 0.08)
+                        blit_center_add( self.base_display, circle_surf(24 + (torch_sin + 3) * 8.5,  (28 + (torch_sin + 4) * 0.1, 6 + (torch_sin + 4) * 0.2, 4 + (torch_sin + 4) * 0.1)), 
+                                         ((real_pos[0] - self.data.offset[0]) + 11,  (real_pos[1] - self.data.offset[1]) + 7))
+                        blit_center_add( self.base_display, circle_surf(10 + (torch_sin + 3) * 8.5, (28 + (torch_sin + 4) * 0.1, 6 + (torch_sin + 4) * 0.2, 6 + (torch_sin + 4) * 0.2)),
+                                         ((real_pos[0] - self.data.offset[0]) + 13,  (real_pos[1] - self.data.offset[1]) + 10))
+
+                        rand_num = random.randint(1, 8)
+                        if rand_num == 1 and self.data.game_on():
+                            self.data.particles.append( Particle( real_pos[0] + random.randrange(-1, 1) + 3, real_pos[1] + random.randrange(-1, 1) + 7, 'light', [random.uniform(-.14, .12), random.uniform(-.6, -.4)], 0.02, 3 + random.randint(0, 20) / 10, custom_color=(255, 255, 255)) )
+                        if rand_num == 2 and self.data.game_on():
+                            self.data.particles.append( Particle( real_pos[0] + random.randrange(-1, 1) + 22, real_pos[1] + random.randrange(-1, 1) + 7, 'light', [random.uniform(-.14, .12), random.uniform(-.6, -.4)], 0.02, 3 + random.randint(0, 20) / 10, custom_color=(255, 255, 255)) )
+
+                        #if rand_num == 2 and self.data.game_on():
+                            #self.data.particles.append( Particle( real_pos[0] + random.randrange(-1, 1) + 7, real_pos[1] + random.randrange(-1, 1) + 10, 'light', [random.uniform(-.14, .12), random.uniform(-.6, -.4)], 0.02, 3 + random.randint(0, 20) / 10, custom_color=(255, 255, 255)) )
+                        #if rand_num == 4 and self.data.game_on():
+                        #    self.data.particles.append( Particle( real_pos[0] + random.randrange(-1, 1) + 17, real_pos[1] + random.randrange(-1, 1) + 10, 'light', [random.uniform(-.14, .12), random.uniform(-.6, -.4)], 0.02, 3 + random.randint(0, 20) / 10, custom_color=(255, 255, 255)) )
+
                     else:
                         print('here')
 
@@ -312,7 +323,8 @@ class App:
                 self.data.enemy_projectiles.pop(i)
             
             if mask_collision(self.data.player.mask, self.data.player.pos, pg.mask.from_surface(image), proj[0]) \
-                and self.data.player.force_scalar == 1 and (self.data.e_handler.state == State.GAME_ON or self.data.e_handler.state == State.TUTORIAL):
+                and self.data.player.force_scalar == 1 and (self.data.e_handler.state == State.GAME_ON or self.data.e_handler.state == State.TUTORIAL) \
+                and self.data.player.state != 'hurt':
                 self.data.screenshake = 8
                 self.data.enemy_projectiles.pop(i)
                 self.data.player.hit()
@@ -373,19 +385,14 @@ class App:
                 p[1][0] += p[2][0]
                 p[1][1] += p[2][1]
 
-                if p[6] < 0.2:
+                if p[6] < 0.2: 
                     p[4] += p[5]
-                if p[6] < 0.4:
-                    #p[3] = (245, 237, 186)
-                    p[3] = (0, 128, 255)
-                elif p[6] < 0.6:
-                    p[3] = (50, 150, 250)
-                elif p[6] < 0.9:
-                    p[3] = (40, 240, 250)
-                elif p[6] < 0.14:
-                    p[3] = (160, 246, 255)
-                else:
-                    p[3] = (210, 250, 255)
+
+                if p[6] < 0.4: p[3] = (0, 128, 255)
+                elif p[6] < 0.6: p[3] = (50, 150, 250)
+                elif p[6] < 0.9: p[3] = (40, 240, 250)
+                elif p[6] < 0.14: p[3] = (160, 246, 255)
+                else: p[3] = (210, 250, 255)
 
                 p[6] += p[5]
 
@@ -405,34 +412,38 @@ class App:
         if self.data.e_handler.state == State.GAME_ON:
             self.game_mechanics()
         elif self.data.e_handler.state == State.TUTORIAL:
-            timer_text = text_surface( f'Timer: {self.data.e_handler.level_timer} / {self.data.e_handler.level_times[self.data.e_handler.level]}', 10, false, WHITE)
-            self.base_display.blit(timer_text, [10, 10])
-
-            dashes_text = text_surface( f'Dashes: {self.data.player.dashes}', 10, false, WHITE)
-            self.base_display.blit(dashes_text, [WIDTH-dashes_text.get_width()-8, 10])
+            dashes_text = text_3d(f'DODGES: {self.data.player.dashes}', 10, false, (255, 70, 0), (255, 255, 255), [
+                1, 0], font_path=self.data.fonts['pixel_2'], bold=false)
+            self.base_display.blit(dashes_text, [
+                WIDTH-dashes_text.get_width()-8, 6
+            ])
+            timer_text = text_3d(f'TIMER: {self.data.e_handler.level_timer} / {self.data.e_handler.level_times[self.data.e_handler.level]}', 10, false, (255, 70, 0), (255, 255, 255), [
+                1, 0], font_path=self.data.fonts['pixel_2'], bold=false)
+            self.base_display.blit(timer_text, [6,6])
 
             if self.data.e_handler.level_timer / self.data.e_handler.level_times[self.data.e_handler.level] < .16:
-                tutorial_text_0 = text_surface( f'Use "W,A,D" to move', 10, false, WHITE)
-                self.base_display.blit(tutorial_text_0, [
-                    SCREEN_CENTER[0]-(tutorial_text_0.get_width()//2), 
-                    SCREEN_CENTER[1]-tutorial_text_0.get_height()
+                wad_text = text_3d("USE ' W,A,D ' KEYS TO MOVE" , 10, false, (255, 70, 0), (255, 255,255), [1,0], font_path=self.data.fonts['pixel_1'], bold=false)
+                self.base_display.blit(wad_text, [
+                    SCREEN_CENTER[0]-(wad_text.get_width()//2), 
+                    SCREEN_CENTER[1]-wad_text.get_height()
                     ])
                 
             elif self.data.e_handler.level_timer / self.data.e_handler.level_times[self.data.e_handler.level] < .4:
-                tutorial_text_1 = text_surface( f'Use "J" to dodge through bullets', 10, false, WHITE)
-                self.base_display.blit(tutorial_text_1, [
-                    SCREEN_CENTER[0]-(tutorial_text_1.get_width()//2), 
-                    SCREEN_CENTER[1]-tutorial_text_1.get_height()
+                dodge_text = text_3d("USE ' J ' KEY TO GO THROUGH PROJECTILES" , 12, false, (255, 70, 0), (255, 255,255), [1,0], font_path=self.data.fonts['pixel_1'], bold=false)
+                self.base_display.blit(dodge_text, [
+                    SCREEN_CENTER[0]-(dodge_text.get_width()//2), 
+                    SCREEN_CENTER[1]-dodge_text.get_height()
                     ])
             else:
                 # -------------- ADD PROJECTILES ------------- #
                 if random.randint(1, self.data.e_handler.spawn_rate[self.data.e_handler.level]) == 1:
                     self.add_dungeon_projectile()
                 if self.data.e_handler.level_timer / self.data.e_handler.level_times[self.data.e_handler.level] < .6:
-                    tutorial_text_2 = text_surface( f'Survive until timer runs out', 10, false, WHITE)
-                    self.base_display.blit(tutorial_text_2, [
-                        SCREEN_CENTER[0]-(tutorial_text_2.get_width()//2),
-                        SCREEN_CENTER[1]-tutorial_text_2.get_height()
+                    surv_text = text_3d("SURVIVE UNTIL TIMER RUNS OUT", 12, false, (255, 70, 0), (255, 255, 255), [
+                                        1, 0], font_path=self.data.fonts['pixel_1'], bold=false)
+                    self.base_display.blit(surv_text, [
+                        SCREEN_CENTER[0]-(surv_text.get_width()//2),
+                        SCREEN_CENTER[1]-surv_text.get_height()
                     ])
 
             if self.data.e_handler.level_timer / self.data.e_handler.level_times[self.data.e_handler.level] > 1:
@@ -468,6 +479,8 @@ class App:
                     self.data.transition[1] += self.data.transition[2]
                     if self.data.transition[1] >= self.data.transition[0]:
                         self.data.e_handler.level += 1
+                        if self.data.e_handler.level >= MAX_ROUNDS: 
+                            self.data.e_handler.change_state(State.WIN)
                         self.data.reset()
 
                         self.data.offset[0] += ( ( self.data.player.pos[0] - WIDTH // 2 )  - self.data.offset[0]) / 12
@@ -490,7 +503,6 @@ class App:
                     self.data.e_handler.change_state(State.GAME_ON)
         elif self.data.e_handler.state == State.DEAD:
 
-
             tutorial_text_0 = text_surface_1(f'GAME OVER', 28, false, (255, 70, 0), font_path=self.data.fonts['pixel_0'])
             tutorial_text_1 = text_surface_1(f'GAME OVER', 28, false, (255, 205, 0), font_path=self.data.fonts['pixel_0'])
             tutorial_text_2 = text_surface_1(f'GAME OVER', 28, false, (255, 255, 255), font_path=self.data.fonts['pixel_0'])
@@ -509,6 +521,24 @@ class App:
             if math.sin(self.data.total_time) > 0:
                 self.base_display.blit(reset_text_flash, (SCREEN_CENTER[0]-(reset_text.get_width()//2)+2, SCREEN_CENTER[1]))
 
+        elif self.data.e_handler.state == State.WIN:
+            pg.draw.rect(self.base_display, BLACK, (0,0,WIDTH,HEIGHT))
+            tutorial_text_0 = text_surface_1(f'YOU WIN', 28, false, (255, 70, 0), font_path=self.data.fonts['pixel_0'])
+            tutorial_text_1 = text_surface_1(f'YOU WIN', 28, false, (255, 205, 0), font_path=self.data.fonts['pixel_0'])
+            tutorial_text_2 = text_surface_1(f'YOU WIN', 28, false, (255, 255, 255), font_path=self.data.fonts['pixel_0'])
+            text_surf = pg.Surface((tutorial_text_0.get_width() + 4, tutorial_text_0.get_height()+10))
+            text_surf.set_colorkey((0, 0, 0))
+            text_surf.blit(tutorial_text_0, (0,0))
+            text_surf.blit(tutorial_text_1, (0, 4))
+            if math.sin(self.data.total_time) > 0: text_surf.blit(tutorial_text_2, (0, 4))
+            self.base_display.blit(text_surf, (SCREEN_CENTER[0]-text_surf.get_width()//2, SCREEN_CENTER[1]-text_surf.get_height()))
+
+            reset_text = text_surface_1(f"press 'r' to reset game", 10, false, (255, 70, 0), font_path=self.data.fonts['pixel_0'])
+            reset_text_1 = text_surface_1(f"press 'r' to reset game", 10, false, (255, 255, 255), font_path=self.data.fonts['pixel_0'])
+            reset_text_flash = text_surface_1(f"press 'r' to reset game", 10, false, (255, 205, 0), font_path=self.data.fonts['pixel_0'])
+            self.base_display.blit(reset_text, (SCREEN_CENTER[0]-reset_text.get_width()//2, SCREEN_CENTER[1]))
+            self.base_display.blit(reset_text_1, (SCREEN_CENTER[0]-(reset_text.get_width()//2)+2, SCREEN_CENTER[1]))
+            
         # ------- DISPLAY SCREENS ------- # 
         screenshake_offset = [0, 0]
         if self.data.screenshake > 0:
@@ -563,8 +593,8 @@ class App:
             spark = [[rand_pos[0], rand_pos[1]],
                      ang + offset,
                      random.randrange(8, 11),
-                     random.randrange(5, 7),
-                     0.4,
+                     random.randrange(6, 8),
+                     0.44,
                      0.92,
                      random.randrange(19, 22),
                      0.96,
@@ -576,29 +606,42 @@ class App:
         if self.data.e_handler.level_run:
             if self.data.e_handler.level_timer == 0:
                 self.data.screenshake = 8
-                self.bottom_line()
+                self.random_line_attack()
 
             if self.data.e_handler.level_timer < self.data.e_handler.level_times[self.data.e_handler.level]:
                 
-                timer_text = text_surface( f'Timer: {self.data.e_handler.level_timer} / {self.data.e_handler.level_times[self.data.e_handler.level]}', 10, false, WHITE)
-                self.base_display.blit(timer_text, [10, 10])
-                dashes_text = text_surface( f'Dashes: {self.data.player.dashes}', 10, false, WHITE)
-                self.base_display.blit(dashes_text, [WIDTH-dashes_text.get_width(), 10])
+                timer_text = text_3d(f'TIMER: {self.data.e_handler.level_timer} / {self.data.e_handler.level_times[self.data.e_handler.level]}', 12, false, (255, 70, 0), (255, 255, 255), [
+                    1, 0], font_path=self.data.fonts['pixel_2'], bold=false)
+                self.base_display.blit(timer_text, [ 10, 10])
+
+                dashes_text = text_3d(f'DODGES: {self.data.player.dashes}', 12, false, (255, 70, 0), (255, 255, 255), [1, 0], font_path=self.data.fonts['pixel_2'], bold=false)
+                self.base_display.blit(dashes_text, [
+                    WIDTH-dashes_text.get_width()-10, 10
+                    ])
 
                 if self.data.e_handler.level_timer / self.data.e_handler.level_times[self.data.e_handler.level] < .16:
                     pass
                 else:
                     # -------------- ADD PROJECTILES ------------- #
-                    if random.randint(1, self.data.e_handler.spawn_rate[self.data.e_handler.level]) == 1:
-                        self.add_dungeon_projectile()
+                    proj_spwn = random.randint(1, self.data.e_handler.spawn_rate[self.data.e_handler.level])
+                    spwn = random.randint(1, self.data.e_handler.line_spawn_rate[self.data.e_handler.level])
+                    if proj_spwn == 1: self.add_dungeon_projectile()
+                    if spwn == 1: self.random_line_attack()
             else:
                 self.data.e_handler.change_state(State.TRANSITION)
-
             self.data.e_handler.level_timer += 1
 
         else:
             if self.data.player.pos[0] > self.data.e_handler.level_start_pos[self.data.e_handler.level]:
                 self.data.e_handler.level_run = true
+
+    def random_line_attack(self):
+        self.data.screenshake = 8
+        line = random.randint(0, 3)
+        if line == 0: self.right_line() 
+        elif line == 1: self.left_line()
+        elif line == 2: self.bottom_line()
+        else: self.top_line()
 
     def right_line(self):
         for i in range(14):
@@ -608,7 +651,7 @@ class App:
                 ang = math.pi + random.uniform(-math.pi/8, math.pi/8)
                 spark = [[WIDTH + self.data.offset[0], (i * 22) + self.data.offset[1]], ang, random.randrange(
                     8, 11), random.randrange(2, 4), 0.12, 0.9, random.randrange(10, 12), 0.97, (20, 6, 6)]
-                self.data.sparks.append(spark)
+                self.data.sparks.append(spark) 
     def left_line(self):
         for i in range(14):
             self.data.enemy_projectiles.append([[self.data.offset[0], (i * 22) + self.data.offset[1]], [1.8, 0], 0, random.randrange(1, 6)])

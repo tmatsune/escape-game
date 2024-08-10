@@ -6,7 +6,7 @@ from .settings import CELL_SIZE
 false = False
 true = True
 
-MAX_JUMPS = 2
+MAX_JUMPS = 20
 MAX_DASHES = 3
 FORCE_SCALAR_DECAY = .2
 HURT_TIME = 1
@@ -18,7 +18,7 @@ class Player(Entity):
         self.speed = 4
         self.air_time = 0
         self.jumps = 1
-        self.lives = 1
+        self.lives = 3
         self.dead = false
         self.dashes = MAX_DASHES
         self.dash_bar = 0
@@ -91,9 +91,9 @@ class Player(Entity):
         else:
             self.fire_timer = self.firerate
 
-        if self.dash_bar < 100:
+        if self.dash_bar < 60:
             self.dash_bar += 1
-        elif self.dash_bar >= 100:
+        elif self.dash_bar >= 60:
             if self.dashes < MAX_DASHES:
                 self.dashes += 1
                 self.dash_bar = 0 
@@ -201,6 +201,6 @@ class Player(Entity):
 
         for i in range(18):
             ang = random.uniform(-math.pi, math.pi)
-            spark = [self.data.player.center(), ang, random.randrange(8, 11), random.randrange(6, 8), random.uniform(.20, .24), 0.9, random.randrange(16, 20), random.uniform(.92, .98), (20, 6, 6)]
+            spark = [self.data.player.center(), ang, random.randrange(7, 10), random.randrange(5, 7), random.uniform(.20, .24), 0.9, random.randrange(18, 22), random.uniform(.92, .98), (20, 6, 6)]
             self.data.sparks.append(spark)
 
