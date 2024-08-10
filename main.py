@@ -64,6 +64,7 @@ class Data:
 
         load_particle_images('data/assets/images/particles')
         load_projectile_images('data/assets/images/projectiles', [CELL_SIZE//1.5, CELL_SIZE//1.5])
+        self.heart_img = get_image('data/assets/images/ui/0.png', [CELL_SIZE, CELL_SIZE])
 
     def reset(self):
         self.player = None
@@ -275,6 +276,11 @@ class App:
         player_alive = self.data.player.lives > 0
         if not player_alive:
             self.data.e_handler.change_state(State.DEAD)
+
+        # ------------ UI 
+        for i in range(1, self.data.player.lives+1):
+            self.base_display.blit(self.data.heart_img,
+                                   (WIDTH - 16 - i * CELL_SIZE, 30))
 
         # ------------------- RENDER PARTICLES -------------------- #
 
