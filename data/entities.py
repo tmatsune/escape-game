@@ -35,6 +35,7 @@ class Player(Entity):
         self.jumps = MAX_JUMPS
         self.force_scalar = 1
         self.mask = None
+        self.just_hit = false
 
     def update(self, dt):
         super().update(dt)
@@ -56,7 +57,7 @@ class Player(Entity):
                 self.change_state('idle')
 
         speed_x = (self.inputs[1] - self.inputs[0])
-        if self.force_scalar != 1 and self.state != 'hurt':
+        if self.force_scalar != 1 and not self.just_hit:
             if self.flip: 
                 if speed_x == 0: speed_x = -1
                 else: speed_x = -1.1
@@ -64,6 +65,7 @@ class Player(Entity):
                 if speed_x == 0: speed_x = 1
                 else: speed_x = 1.1
         elif self.force_scalar != 1:
+            self.just_hit = false
             speed_x = 1.2 if self.flip else -1.2
 
         self.vel[0] = speed_x * self.speed * self.force_scalar
@@ -167,6 +169,7 @@ class Player(Entity):
     def hit(self):
         self.lives -= 1 
         self.change_state('hurt')
+        self.just_hit = true 
         for i in range(5):
             color = random.choice([(190, 5, 55), (200, 30, 30), (180, 10, 10)])
             particle = ['blood', self.center(), [random.random() * 6 - 3, random.random() * 6 - 3], color, random.randrange(3, 5), random.uniform(.02, .06), 0]

@@ -12,7 +12,7 @@ false = False
 true = True
 inf = float('inf')
 n_inf = float('-inf')
-MAX_ROUNDS = 4 
+MAX_ROUNDS = 4
 
 class Decor(Enum):
     LEFT_TORCH = 0
@@ -126,11 +126,11 @@ class Event_Handler:
         self.line_spawn_rate = [90, 85, 80, 75]
         self.starting_positions = {
             0: [80, -10],
-            1: [150, -10],
-            2: [80, 100],
-            3: [100,100],
+            1: [80, -10],
+            2: [80, -10],
+            3: [80,-10],
         }
-        self.level_times = [500, 600, 600, 600]
+        self.level_times = [80, 100, 120, 140]
         self.level_start_pos = [120, 240, 200, 240]
 
     def reset(self): 
@@ -413,6 +413,7 @@ class App:
                 self.data.circle_particles.remove(p)
             else:
                 pg.draw.circle(self.base_display, p[3], (p[1][0] - self.data.offset[0], p[1][1] - self.data.offset[1]), p[4])
+
         # ---------------------- LEVEL MECHANICS -------------------- #
 
         if self.data.e_handler.state == State.GAME_ON:
@@ -485,8 +486,9 @@ class App:
                     self.data.transition[1] += self.data.transition[2]
                     if self.data.transition[1] >= self.data.transition[0]:
                         self.data.e_handler.level += 1
-                        if self.data.e_handler.level >= MAX_ROUNDS: 
-                            self.data.e_handler.change_state(State.WIN)
+                        if self.data.e_handler.level == MAX_ROUNDS: 
+                            self.data.e_handler.change_state(State.WIN) 
+                            return
                         self.data.reset()
 
                         self.data.offset[0] += ( ( self.data.player.pos[0] - WIDTH // 2 )  - self.data.offset[0]) / 12
@@ -505,7 +507,7 @@ class App:
             else:
                 self.data.transition[1] -= self.data.transition[2]
                 if self.data.transition[1] < 0:
-                    self.data.transition = [250, 1, 4, 'closing']
+                    self.data.transition = [350, 1, 4, 'closing']
                     self.data.e_handler.change_state(State.GAME_ON)
         elif self.data.e_handler.state == State.DEAD:
 
@@ -516,7 +518,6 @@ class App:
             text_surf.set_colorkey((0, 0, 0))
             text_surf.blit(tutorial_text_0, (0,0))
             text_surf.blit(tutorial_text_1, (0, 4))
-            #if math.sin(self.data.total_time) > 0: text_surf.blit(tutorial_text_2, (0, 4))
             self.base_display.blit(text_surf, (SCREEN_CENTER[0]-text_surf.get_width()//2, SCREEN_CENTER[1]-text_surf.get_height()))
 
             reset_text = text_surface_1(f"press 'r' to reset game", 10, false, (255, 70, 0), font_path=self.data.fonts['pixel_0'])

@@ -88,7 +88,7 @@ class Tile_Editor:
 
     def render(self):
         
-        self.display.fill((0, 0, 16))
+        self.display.fill((6, 0, 26))
 
         # ----- MOUSE ---- #
         mouse_pos = pg.mouse.get_pos()
