@@ -422,7 +422,7 @@ class App:
             dashes_text = text_3d(f'DODGES: {self.data.player.dashes}', 10, false, (255, 70, 0), (255, 255, 255), [
                 1, 0], font_path=self.data.fonts['pixel_2'], bold=false)
             self.base_display.blit(dashes_text, [
-                WIDTH-dashes_text.get_width()-8, 6
+                WIDTH-dashes_text.get_width()-8, 10
             ])
             timer_text = text_3d(f'TIMER: {self.data.e_handler.level_timer} / {self.data.e_handler.level_times[self.data.e_handler.level]}', 10, false, (255, 70, 0), (255, 255, 255), [
                 1, 0], font_path=self.data.fonts['pixel_2'], bold=false)
@@ -491,8 +491,8 @@ class App:
                             return
                         self.data.reset()
 
-                        self.data.offset[0] += ( ( self.data.player.pos[0] - WIDTH // 2 )  - self.data.offset[0]) / 12
-                        self.data.offset[1] += ( ( self.data.player.pos[1] - HEIGHT // 2 )  - self.data.offset[1]) / 12
+                        self.data.offset[0] = ( ( self.data.player.pos[0] - WIDTH // 2 )  - self.data.offset[0]) / 12
+                        self.data.offset[1] = ( ( self.data.player.pos[1] - HEIGHT // 2 )  - self.data.offset[1]) / 12
                         if self.data.offset[0] < self.data.edges[0]:
                             self.data.offset[0] = self.data.edges[0]
                         if self.data.offset[0] + WIDTH > self.data.edges[1]:
@@ -617,13 +617,13 @@ class App:
 
             if self.data.e_handler.level_timer < self.data.e_handler.level_times[self.data.e_handler.level]:
                 
-                timer_text = text_3d(f'TIMER: {self.data.e_handler.level_timer} / {self.data.e_handler.level_times[self.data.e_handler.level]}', 12, false, (255, 70, 0), (255, 255, 255), [
+                timer_text = text_3d(f'TIMER: {self.data.e_handler.level_timer} / {self.data.e_handler.level_times[self.data.e_handler.level]}', 10, false, (255, 70, 0), (255, 255, 255), [
                     1, 0], font_path=self.data.fonts['pixel_2'], bold=false)
-                self.base_display.blit(timer_text, [ 10, 10])
+                self.base_display.blit(timer_text, [ 10, 6])
 
-                dashes_text = text_3d(f'DODGES: {self.data.player.dashes}', 12, false, (255, 70, 0), (255, 255, 255), [1, 0], font_path=self.data.fonts['pixel_2'], bold=false)
+                dashes_text = text_3d(f'DODGES: {self.data.player.dashes}', 10, false, (255, 70, 0), (255, 255, 255), [1, 0], font_path=self.data.fonts['pixel_2'], bold=false)
                 self.base_display.blit(dashes_text, [
-                    WIDTH-dashes_text.get_width()-10, 10
+                    WIDTH-dashes_text.get_width()-10, 6
                     ])
 
                 if self.data.e_handler.level_timer / self.data.e_handler.level_times[self.data.e_handler.level] < .16:
@@ -684,22 +684,6 @@ class App:
                 spark = [[40+self.data.offset[0] + (i * 22) , self.data.offset[1]+WIDTH], ang, random.randrange(
                     8, 11), random.randrange(2, 4), 0.12, 0.9, random.randrange(10, 12), 0.97, (20, 6, 6)]
                 self.data.sparks.append(spark)
-
-    def test_func(self):
-        # angles: 0 -> right, math.pi/2, -> down , math.pi -> left, (2*math.pi)/2
-         #ang = math.atan2((
-         #self.mouse_pos[1]//2) - (self.data.player.center()[1] - self.data.offset[1]), 
-         #(self.mouse_pos[0]//2) - (self.data.player.center()[0] - self.data.offset[0]) 
-         #)
-        self.add_dungeon_projectile()
-        #angle = random.uniform(-3.14, 3.14)
-        #speed = random.random() * 2 + 1
-        #particle = ['fire_ball', self.data.player.center(), [math.cos(angle) * speed, math.sin(angle) * speed], (245, 237, 186), 4, .04, -.5]
-        #self.data.circle_particles.append(particle)
-        
-        #ang = random.uniform(-math.pi, math.pi)
-        #spark = [self.data.player.center(), ang, random.randrange(8, 11), random.randrange(2, 4), 0.12, 0.9, random.randrange(10, 12), 0.97, (20, 6, 6)]
-        #self.data.sparks.append(spark)
 
     def update(self):
         self.clock.tick(FPS)
